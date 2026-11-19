@@ -1,0 +1,15 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Maya temporary files
+*.swp
+*.bak
+*~
+.mayaSwatches/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
