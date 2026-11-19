@@ -44,21 +44,6 @@ def get_current_axes():
     return up, front, side
 
 
-def apply_pivot(obj, piv):
-    """Applies pivot in world space. For group/parent nodes with children, moves translation 
-    while preserving child world positions so game engines (Unity/Unreal) read the pivot correctly."""
-    children = cmds.listRelatives(obj, children=True, type="transform", fullPath=True) or []
-    if children:
-        unparented = cmds.parent(children, world=True)
-        try:
-            cmds.xform(obj, worldSpace=True, translation=piv)
-            cmds.xform(obj, worldSpace=True, rotatePivot=piv, scalePivot=piv)
-        finally:
-            cmds.parent(unparented, obj)
-    else:
-        cmds.xform(obj, worldSpace=True, rotatePivot=piv, scalePivot=piv)
-
-
 def snap_pivot(pos="bottom"):
     """Snaps pivot of selected objects to bounding box extremes based on active axes."""
     objs = get_selection()
@@ -105,7 +90,7 @@ def snap_pivot(pos="bottom"):
                 target[front_axis] = min_bounds[front_axis]
 
             piv = [target["X"], target["Y"], target["Z"]]
-            apply_pivot(obj, piv)
+            cmds.xform(obj, worldSpace=True, rotatePivot=piv, scalePivot=piv)
 
         print(f"Pivot snapped to {pos.upper()} on {len(objs)} object(s).")
     finally:
@@ -147,7 +132,7 @@ def paste_target_pivot():
     cmds.undoInfo(openChunk=True)
     try:
         for item in targets:
-            apply_pivot(item, copied_pivot["rp"])
+            cmds.xform(item, worldSpace=True, rotatePivot=copied_pivot["rp"], scalePivot=copied_pivot["sp"])
         print(f"Pasted pivot to {len(targets)} object(s).")
     finally:
         cmds.undoInfo(closeChunk=True)
@@ -167,13 +152,7 @@ def group_over_selection():
         grp_name = f"{clean_prefix}_GRP"
 
         new_group = cmds.group(sel, name=grp_name)
-        bbox = cmds.exactWorldBoundingBox(new_group)
-        center_piv = [
-            (bbox[0] + bbox[3]) * 0.5,
-            (bbox[1] + bbox[4]) * 0.5,
-            (bbox[2] + bbox[5]) * 0.5
-        ]
-        apply_pivot(new_group, center_piv)
+        cmds.xform(new_group, centerPivots=True)
         cmds.select(new_group)
 
         print(f"Created group '{new_group}' with centered pivot.")
